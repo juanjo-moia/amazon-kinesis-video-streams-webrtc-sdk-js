@@ -87,6 +87,8 @@ export class SignalingClient extends EventEmitter {
         validateValueNonNil(config.channelEndpoint, 'channelEndpoint');
 
         this.config = { ...config }; // Copy config to new object for immutability.
+        console.log('====== SIGNALING CLIENT: CONFIG =====');
+        console.log({ ...config });
 
         if (config.requestSigner) {
             this.requestSigner = config.requestSigner;
@@ -111,6 +113,7 @@ export class SignalingClient extends EventEmitter {
         if (this.readyState !== ReadyState.CLOSED) {
             throw new Error('Client is already open, opening, or closing');
         }
+        console.log('====== SIGNALING CLIENT: CONNECTING =====');
         this.readyState = ReadyState.CONNECTING;
 
         // The process of opening the connection is asynchronous via promises, but the interaction model is to handle asynchronous actions via events.
@@ -166,6 +169,8 @@ export class SignalingClient extends EventEmitter {
      * @param {string} [recipientClientId] - ID of the client to send the message to. Required for 'MASTER' role. Should not be present for 'VIEWER' role.
      */
     public sendSdpOffer(sdpOffer: RTCSessionDescription, recipientClientId?: string): void {
+        console.log('====== SENDING SDP OFFER =====');
+        console.log(sdpOffer);
         this.sendMessage(MessageType.SDP_OFFER, sdpOffer.toJSON(), recipientClientId);
     }
 
@@ -177,6 +182,8 @@ export class SignalingClient extends EventEmitter {
      * @param {string} [recipientClientId] - ID of the client to send the message to. Required for 'MASTER' role. Should not be present for 'VIEWER' role.
      */
     public sendSdpAnswer(sdpAnswer: RTCSessionDescription, recipientClientId?: string): void {
+        console.log('====== SENDING SDP ANSWER =====');
+        console.log(sdpAnswer);
         this.sendMessage(MessageType.SDP_ANSWER, sdpAnswer.toJSON(), recipientClientId);
     }
 
@@ -188,6 +195,8 @@ export class SignalingClient extends EventEmitter {
      * @param {string} [recipientClientId] - ID of the client to send the message to. Required for 'MASTER' role. Should not be present for 'VIEWER' role.
      */
     public sendIceCandidate(iceCandidate: RTCIceCandidate, recipientClientId?: string): void {
+        console.log('====== SENDING ICE CANDIDATE =====');
+        console.log(iceCandidate);
         this.sendMessage(MessageType.ICE_CANDIDATE, iceCandidate.toJSON(), recipientClientId);
     }
 
@@ -228,6 +237,7 @@ export class SignalingClient extends EventEmitter {
      * WebSocket 'open' event handler. Forwards the event on to listeners.
      */
     private onOpen(): void {
+        console.log('====== SIGNALING CLIENT: CONNECTED =====');
         this.readyState = ReadyState.OPEN;
         this.emit('open');
     }
@@ -249,14 +259,20 @@ export class SignalingClient extends EventEmitter {
         const { messageType, senderClientId } = parsedEventData;
         switch (messageType) {
             case MessageType.SDP_OFFER:
+                console.log('====== RECEIVED SDP OFFER =====');
+                console.log(parsedMessagePayload);
                 this.emit('sdpOffer', parsedMessagePayload, senderClientId);
                 this.emitPendingIceCandidates(senderClientId);
                 return;
             case MessageType.SDP_ANSWER:
+                console.log('====== RECEIVED SDP ANSWER =====');
+                console.log(parsedMessagePayload);
                 this.emit('sdpAnswer', parsedMessagePayload, senderClientId);
                 this.emitPendingIceCandidates(senderClientId);
                 return;
             case MessageType.ICE_CANDIDATE:
+                console.log('====== RECEIVED ICE CANDIDATE =====');
+                console.log(parsedMessagePayload);
                 this.emitOrQueueIceCandidate(parsedMessagePayload, senderClientId);
                 return;
         }
@@ -330,6 +346,7 @@ export class SignalingClient extends EventEmitter {
      * 'close' event handler. Forwards the error onto listeners and cleans up the connection.
      */
     private onClose(): void {
+        console.log('====== SIGNALING CLIENT: CLOSED =====');
         this.readyState = ReadyState.CLOSED;
         this.cleanupWebSocket();
         this.emit('close');

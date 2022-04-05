@@ -194,6 +194,23 @@ async function startViewer(localView, remoteView, formValues, onStatsReport, onR
 
     console.log('[VIEWER] Starting viewer connection');
     viewer.signalingClient.open();
+    // Log selected ICE pair on an interval
+    setInterval(() => {
+        viewer.peerConnection.getReceivers().map(receiver => {
+            if (!receiver.transport) {
+                return;
+            }
+            const logSelectedCandidate = () => {
+                if (!receiver.transport.iceTransport.getSelectedCandidatePair()) {
+                    return;
+                }
+                console.log(`====== CURRENT SELECTED ICE PAIR [TRACK = ${receiver.track?.kind || 'unknown'}] =====`);
+                console.log(receiver.transport.iceTransport.getSelectedCandidatePair());
+            };
+            receiver.transport.iceTransport.onselectedcandidatepairchange = logSelectedCandidate;
+            logSelectedCandidate();
+        });
+    }, 3000);
 }
 
 function stopViewer() {
