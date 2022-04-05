@@ -211,19 +211,22 @@ async function startMaster(localView, remoteView, formValues, onStatsReport, onR
     master.signalingClient.open();
     // Log selected ICE pair on an interval
     setInterval(() => {
-        master.peerConnection.getSenders().map(sender => {
-            if (!sender.transport) {
-                return;
-            }
-            const logSelectedCandidate = () => {
-                if (!sender.transport.iceTransport.getSelectedCandidatePair()) {
+        Object.keys(master.peerConnectionByClientId).map(clientId => {
+            const peer = master.peerConnectionByClientId[clientId];
+            peer.getSenders().map(sender => {
+                if (!sender.transport) {
                     return;
                 }
-                console.log(`====== CURRENT SELECTED ICE PAIR [TRACK = ${sender.track?.kind || 'unknown'}] =====`);
-                console.log(sender.transport.iceTransport.getSelectedCandidatePair());
-            };
-            sender.transport.iceTransport.onselectedcandidatepairchange = logSelectedCandidate;
-            logSelectedCandidate();
+                const logSelectedCandidate = () => {
+                    if (!sender.transport.iceTransport.getSelectedCandidatePair()) {
+                        return;
+                    }
+                    console.log(`====== PEER[${clientId}]: CURRENT SELECTED ICE PAIR [TRACK = ${sender.track?.kind || 'unknown'}] =====`);
+                    console.log(sender.transport.iceTransport.getSelectedCandidatePair());
+                };
+                sender.transport.iceTransport.onselectedcandidatepairchange = logSelectedCandidate;
+                logSelectedCandidate();
+            });
         });
     }, 3000);
 }
